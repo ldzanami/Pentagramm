@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Pentagramm.Data;
+using Pentagramm.Infrastructure.SupportClasses;
 using Pentagramm.Models.Entities;
+using Pentagramm.Services;
 using System.Text;
 
 namespace Pentagramm
@@ -68,6 +70,7 @@ namespace Pentagramm
             });
 
             builder.Services.AddAuthorization();
+            builder.Services.AddScoped<RoleService>();
 
 
 
@@ -87,6 +90,13 @@ namespace Pentagramm
             app.UseAuthorization();
 
             app.UseAuthorization();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleService = scope.ServiceProvider.GetRequiredService<RoleService>();
+                roleService.CreateRoleIfNotExists(Constants.AdminRole).Wait();
+                roleService.CreateRoleIfNotExists(Constants.UserRole).Wait();
+            }
 
             app.MapControllers();
 
