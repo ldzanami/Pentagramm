@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pentagramm.Data;
@@ -11,9 +12,11 @@ using Pentagramm.Data;
 namespace Pentagramm.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250812075921_BeforeTesting")]
+    partial class BeforeTesting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -205,24 +208,32 @@ namespace Pentagramm.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("AuthorId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorNumber")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ChatId")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsReaded")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Text")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -380,12 +391,14 @@ namespace Pentagramm.Migrations
                     b.HasOne("Pentagramm.Models.Entities.User", "Author")
                         .WithMany("Messages")
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
                     b.HasOne("Pentagramm.Models.Entities.Chat", "Chat")
                         .WithMany("MessageStory")
                         .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Author");
 

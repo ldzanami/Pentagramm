@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>SignalR Chat Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; }
+        input, button { padding: 6px; margin: 3px; }
+        #messages { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 6px; }
+        .msg { border-bottom: 1px solid #eee; padding: 4px 0; }
+    </style>
+</head>
+<body>
+    <h2>SignalR Chat Test</h2>
+    <div>
+        <label>Backend base URL: <input id="baseUrl" value="https://localhost:5001" placeholder="leave empty for same origin" style="width:300px" /></label>
+    </div>
+    <div>
+        <label>Chat ID: <input type="text" id="chatId" value="74a48d4b-32a5-4a2a-80f8-1a2a94d08baa" /></label>
+        <label>Username: <input type="text" id="username" value="Idzanami" /></label>
+        <button id="connectBtn">Connect</button>
+        <button id="joinBtn">Join Chat</button>
+    </div>
+    <div id="messages"></div>
+    <div>
+        <input type="text" id="message" placeholder="Type a message..." style="width:70%" />
+        <button id="sendBtn">Send</button>
+    </div>
+
+    <script>
+        let connection;
+        function baseUrl() { const v = document.getElementById('baseUrl').value.trim(); return v ? v : window.location.origin; }
+
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(baseUrl() + '/chatHub')
+                .withAutomaticReconnect()
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            connection.on('ReceiveMessage', (msg) => {
+                const e = document.createElement('div');
+                e.className = 'msg';
+                e.textContent = `[${new Date(msg.createdAt).toLocaleTimeString()}] ${msg.authorName || msg.authorId}: ${msg.text}`;
+                document.getElementById('messages').appendChild(e);
+                document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            });
+
+            connection.onclose(err => console.log('Connection closed', err));
+
+            try {
+                await connection.start();
+                alert('Connected');
+            } catch (err) {
+                console.error(err);
+                alert('Failed to connect');
+            }
+        });
+
+        document.getElementById('joinBtn').addEventListener('click', async () => {
+            const chatId = document.getElementById('chatId').value.trim();
+            if (!connection) return alert('Not connected');
+            try {
+                await connection.invoke('JoinChat', chatId);
+                alert('Joined ' + chatId);
+            } catch (err) { alert(err); }
+        });
+
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+            const chatId = document.getElementById('chatId').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const text = document.getElementById('message').value.trim();
+            if (!connection) return alert('Not connected');
+            if (!chatId) return alert('ChatId required');
+
+            // For demo: find userId by username via REST (simple and naive)
+            try {
+                const base = baseUrl();
+                // get or create user
+                let users = await fetch(base + '/api/auth/users').then(r => r.json());
+                let user = users.find(u => u.username === username);
+                if(!user) return alert('User not found');
+
+
+                // send message
+                await connection.invoke('SendMessage', chatId, user.id, text);
+                document.getElementById('message').value = '';
+            } catch (err) {
+                console.error(err);
+                alert('Send failed');
+            }
+        });
+    </script>
+</body>
+</html>

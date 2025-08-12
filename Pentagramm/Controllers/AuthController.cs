@@ -67,6 +67,14 @@ namespace Pentagramm.Controllers
             });
         }
 
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers() => Ok( await AppDbContext.Users.Select(user => new
+        {
+            Username = user.UserName,
+            user.Id,
+            user.PhoneNumber,
+            user.Role
+        }).ToListAsync());
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)

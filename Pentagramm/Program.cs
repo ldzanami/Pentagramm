@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Pentagramm.Data;
+using Pentagramm.Hubs;
 using Pentagramm.Infrastructure.SupportClasses;
 using Pentagramm.Models.Entities;
 using Pentagramm.Services;
@@ -19,6 +20,15 @@ namespace Pentagramm
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddControllers();
+            builder.Services.AddSignalR();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllLocal", policy => policy
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .SetIsOriginAllowed(origin => true));
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
@@ -98,7 +108,10 @@ namespace Pentagramm
                 roleService.CreateRoleIfNotExists(Constants.UserRole).Wait();
             }
 
+            app.UseCors("AllowAllLocal");
+
             app.MapControllers();
+            app.MapHub<ChatHub>("/chatHub");
 
             app.Run();
         }
